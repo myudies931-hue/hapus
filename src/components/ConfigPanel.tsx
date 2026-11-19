@@ -31,6 +31,7 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({
         ...config.accounts,
         {
           id: newId,
+          url: '',
           email: '',
           password: '',
           totpSecret: '',
@@ -202,17 +203,44 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({
             />
           </button>
         </div>
+
+        {/* Auto-copy Screenshot Error ke /sdcard/Download */}
+        <div className="mt-4 pt-4 border-t border-slate-200 flex items-center justify-between gap-4">
+          <div>
+            <div className="text-sm font-medium text-slate-900">
+              Salin Screenshot Terakhir ke Folder Download HP
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Saat bot gagal, otomatis simpan dengan nama 12 angka acak (misal <span className="font-mono text-slate-700">482910384712.png</span>) dan salin ke <span className="font-mono text-slate-700">/storage/emulated/0/Download/</span> agar tidak saling menimpa di Android 16.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={config.saveErrorToSdcard}
+            onClick={() => onChange({ ...config, saveErrorToSdcard: !config.saveErrorToSdcard })}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+              config.saveErrorToSdcard ? 'bg-blue-600' : 'bg-slate-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-150 ${
+                config.saveErrorToSdcard ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
       </section>
 
-      {/* Daftar Akun (accounts.json) */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-slate-200">
+      {/* Sumber Kredensial & TOTP */}
+      <section className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200">
           <div>
             <h2 className="font-display text-base font-semibold text-slate-900">
-              Data Akun & Base32 Secret Key
+              Sumber Data Akun (<span className="font-mono">accounts.json</span>)
             </h2>
             <p className="text-sm text-slate-500 mt-0.5">
-              Semua data hanya diproses di browser Anda untuk menyusun file{' '}
+              Simpan daftar link website akun atau kredensial manual ke dalam file{' '}
               <span className="font-mono text-slate-700">accounts.json</span>.
             </p>
           </div>
@@ -222,108 +250,261 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Tambah Akun</span>
+            <span>{config.credentialSource === 'website_tab' ? 'Tambah Link Akun' : 'Tambah Akun'}</span>
           </button>
         </div>
 
-        <div className="divide-y divide-slate-200">
-          {config.accounts.map((acc, idx) => {
-            const secretCheck = acc.totpSecret.trim()
-              ? validateBase32Secret(acc.totpSecret)
-              : null;
-            const isPwdVisible = !!visiblePasswords[acc.id];
+        {/* Switch Mode Sumber Data */}
+        <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-lg">
+          <button
+            type="button"
+            onClick={() => onChange({ ...config, credentialSource: 'website_tab' })}
+            className={`px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              config.credentialSource === 'website_tab'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Link Website di accounts.json
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ ...config, credentialSource: 'accounts_json' })}
+            className={`px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
+              config.credentialSource === 'accounts_json'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Email + Password + Base32
+          </button>
+        </div>
 
-            return (
-              <div key={acc.id} className="py-5 first:pt-5 last:pb-0 space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-medium text-slate-500 font-mono tabular-nums">
-                    Akun #{idx + 1}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    {acc.totpSecret.trim() && (
-                      <button
-                        type="button"
-                        onClick={() => onTestSecret(acc.totpSecret)}
-                        className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline cursor-pointer whitespace-nowrap"
-                      >
-                        Uji OTP di Tester
-                      </button>
-                    )}
+        {config.credentialSource === 'website_tab' ? (
+          <div className="space-y-4 pt-1">
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Setiap link di bawah otomatis tersimpan ke <span className="font-mono text-slate-800">accounts.json</span>. Bot membaca daftar link dari <span className="font-mono text-slate-800">accounts.json</span>, membuka Tab 1 untuk menyalin Email, Password asli, dan Live TOTP, lalu memproses Google Payments di Tab 2 satu per satu.
+            </p>
+
+            <div className="divide-y divide-slate-200 border border-slate-200 rounded-lg px-4">
+              {config.accounts.map((acc, idx) => (
+                <div key={acc.id} className="py-3.5 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-xs font-medium text-slate-700 font-mono tabular-nums">
+                      Link Akun #{idx + 1}
+                    </label>
                     {config.accounts.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeAccount(acc.id)}
-                        aria-label={`Hapus akun ${idx + 1}`}
-                        className="p-1.5 text-slate-400 hover:text-red-600 rounded transition-colors cursor-pointer"
+                        aria-label={`Hapus link akun ${idx + 1}`}
+                        className="p-1 text-slate-400 hover:text-red-600 rounded transition-colors cursor-pointer"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                      Email Google
-                    </label>
-                    <input
-                      type="email"
-                      value={acc.email}
-                      onChange={(e) => updateAccount(acc.id, { email: e.target.value })}
-                      placeholder="contoh@gmail.com"
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                      Password Akun
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={isPwdVisible ? 'text' : 'password'}
-                        value={acc.password}
-                        onChange={(e) => updateAccount(acc.id, { password: e.target.value })}
-                        placeholder="Masukkan password akun"
-                        className="w-full pl-3 pr-10 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => togglePasswordVisibility(acc.id)}
-                        aria-label={isPwdVisible ? 'Sembunyikan password' : 'Tampilkan password'}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
-                      >
-                        {isPwdVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Google Authenticator Base32 Secret Key (atau URI otpauth://)
-                  </label>
                   <input
-                    type="text"
-                    value={acc.totpSecret}
-                    onChange={(e) => updateAccount(acc.id, { totpSecret: e.target.value })}
-                    placeholder="JBSWY3DPEHPK3PXP atau otpauth://totp/..."
+                    type="url"
+                    value={acc.url}
+                    onChange={(e) => updateAccount(acc.id, { url: e.target.value })}
+                    placeholder="https://akun.impura.id/..."
                     className="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                   />
-                  {secretCheck && !secretCheck.valid && (
-                    <p className="text-xs text-red-600 mt-1.5">{secretCheck.error}</p>
-                  )}
-                  {secretCheck && secretCheck.valid && (
-                    <p className="text-xs text-emerald-700 mt-1.5">
-                      Base32 valid ({secretCheck.normalized.length} karakter) — siap dikonversi ke 6-digit TOTP.
-                    </p>
-                  )}
                 </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                  Selector Email (opsional)
+                </label>
+                <input
+                  type="text"
+                  value={config.websiteSource.emailSelector}
+                  onChange={(e) =>
+                    onChange({
+                      ...config,
+                      websiteSource: { ...config.websiteSource, emailSelector: e.target.value },
+                    })
+                  }
+                  placeholder="Kosongkan = deteksi otomatis"
+                  className="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                />
               </div>
-            );
-          })}
-        </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                  Selector Password (opsional)
+                </label>
+                <input
+                  type="text"
+                  value={config.websiteSource.passwordSelector}
+                  onChange={(e) =>
+                    onChange({
+                      ...config,
+                      websiteSource: { ...config.websiteSource, passwordSelector: e.target.value },
+                    })
+                  }
+                  placeholder="Kosongkan = deteksi otomatis"
+                  className="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                  Selector Live TOTP (opsional)
+                </label>
+                <input
+                  type="text"
+                  value={config.websiteSource.totpSelector}
+                  onChange={(e) =>
+                    onChange({
+                      ...config,
+                      websiteSource: { ...config.websiteSource, totpSelector: e.target.value },
+                    })
+                  }
+                  placeholder="Kosongkan = deteksi 6 digit"
+                  className="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-200 flex items-center justify-between gap-4">
+              <div>
+                <div className="text-xs font-medium text-slate-900">
+                  Klik Tombol Salin &amp; Baca Clipboard
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Aktifkan jika nilai di website hanya muncul setelah mengklik tombol Salin/Copy pada selector di atas.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={config.websiteSource.readViaClipboard}
+                onClick={() =>
+                  onChange({
+                    ...config,
+                    websiteSource: {
+                      ...config.websiteSource,
+                      readViaClipboard: !config.websiteSource.readViaClipboard,
+                    },
+                  })
+                }
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+                  config.websiteSource.readViaClipboard ? 'bg-blue-600' : 'bg-slate-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-150 ${
+                    config.websiteSource.readViaClipboard ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-200">
+            {config.accounts.map((acc, idx) => {
+              const secretCheck = acc.totpSecret.trim()
+                ? validateBase32Secret(acc.totpSecret)
+                : null;
+              const isPwdVisible = !!visiblePasswords[acc.id];
+
+              return (
+                <div key={acc.id} className="py-5 first:pt-2 last:pb-0 space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-medium text-slate-500 font-mono tabular-nums">
+                      Akun #{idx + 1}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      {acc.totpSecret.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => onTestSecret(acc.totpSecret)}
+                          className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline cursor-pointer whitespace-nowrap"
+                        >
+                          Uji OTP di Tester
+                        </button>
+                      )}
+                      {config.accounts.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeAccount(acc.id)}
+                          aria-label={`Hapus akun ${idx + 1}`}
+                          className="p-1.5 text-slate-400 hover:text-red-600 rounded transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                        Email Google
+                      </label>
+                      <input
+                        type="email"
+                        value={acc.email}
+                        onChange={(e) => updateAccount(acc.id, { email: e.target.value })}
+                        placeholder="contoh@gmail.com"
+                        className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                        Password Akun
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={isPwdVisible ? 'text' : 'password'}
+                          value={acc.password}
+                          onChange={(e) => updateAccount(acc.id, { password: e.target.value })}
+                          placeholder="Masukkan password akun"
+                          className="w-full pl-3 pr-10 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility(acc.id)}
+                          aria-label={isPwdVisible ? 'Sembunyikan password' : 'Tampilkan password'}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+                        >
+                          {isPwdVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                      Google Authenticator Base32 Secret Key (atau URI otpauth://)
+                    </label>
+                    <input
+                      type="text"
+                      value={acc.totpSecret}
+                      onChange={(e) => updateAccount(acc.id, { totpSecret: e.target.value })}
+                      placeholder="JBSWY3DPEHPK3PXP atau otpauth://totp/..."
+                      className="w-full px-3 py-2 text-sm font-mono bg-white border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                    />
+                    {secretCheck && !secretCheck.valid && (
+                      <p className="text-xs text-red-600 mt-1.5">{secretCheck.error}</p>
+                    )}
+                    {secretCheck && secretCheck.valid && (
+                      <p className="text-xs text-emerald-700 mt-1.5">
+                        Base32 valid ({secretCheck.normalized.length} karakter) — siap dikonversi ke 6-digit TOTP.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );

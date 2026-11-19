@@ -14,14 +14,14 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({ dryRun }) 
       <div className="px-6 py-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h2 className="font-display text-base font-semibold text-slate-900">
-            Inspektor Alur Otomatisasi 12 Langkah
+            Inspektor Alur Otomatisasi {WORKFLOW_STEPS.length} Langkah
           </h2>
           <p className="text-sm text-slate-500 mt-0.5">
             Klik setiap langkah untuk melihat selector DOM, penanganan iframe, dan mekanisme fallback ID/EN yang tertanam di skrip.
           </p>
         </div>
         <span className="text-xs text-slate-500 font-mono tabular-nums whitespace-nowrap">
-          12 Tahap · {dryRun ? 'Mode Dry Run Aktif' : 'Mode Eksekusi Penuh'}
+          {WORKFLOW_STEPS.length} Tahap · {dryRun ? 'Mode Dry Run Aktif' : 'Mode Eksekusi Penuh'}
         </span>
       </div>
 
@@ -65,7 +65,7 @@ export const WorkflowInspector: React.FC<WorkflowInspectorProps> = ({ dryRun }) 
         <div className="lg:col-span-5 p-6 bg-slate-50/50 space-y-5">
           <div>
             <div className="text-xs font-mono text-blue-600 font-medium">
-              Langkah {String(selectedStep.number).padStart(2, '0')} dari 12
+              Langkah {String(selectedStep.number).padStart(2, '0')} dari {WORKFLOW_STEPS.length}
             </div>
             <h3 className="font-display text-lg font-semibold text-slate-900 mt-1">
               {selectedStep.title}

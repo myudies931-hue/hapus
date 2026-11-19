@@ -109,4 +109,13 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
     notes: 'Jika opsi Dry Run aktif, bot berhenti tepat sebelum klik final ini untuk verifikasi aman.',
     codeAnchor: 'LANGKAH 12',
   },
+  {
+    number: 13,
+    title: 'Kosongkan Google Family (Sisakan 1 Pengelola)',
+    summary: 'Buka myaccount.google.com/family/details, cek jika family kosong atau hapus semua "Anggota" dengan smart auth hingga tersisa 1 Pengelola.',
+    targetUrlOrContext: 'https://myaccount.google.com/family/details',
+    selectors: ['Anggota / Member', 'Hapus anggota / Remove member', 'Hapus / Remove', 'Smart Re-Auth (Password / TOTP)'],
+    notes: 'Jika muncul "Your family on Google / Get started", bot melapor family sudah kosong. Jika ada Anggota, bot klik Hapus anggota, mengisi Password/Authenticator secara adaptif, klik Hapus, dan mengulang hingga hanya tersisa 1 Pengelola akun keluarga.',
+    codeAnchor: 'LANGKAH 13',
+  },
 ];

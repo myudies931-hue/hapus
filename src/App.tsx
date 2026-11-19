@@ -12,12 +12,22 @@ const INITIAL_CONFIG: BotConfig = {
   runtime: 'native',
   browserMode: 'headless',
   language: 'auto',
-  dryRun: true,
+  dryRun: false,
+  saveErrorToSdcard: true,
+  credentialSource: 'website_tab',
+  websiteSource: {
+    url: 'https://akun.impura.id/contoh-link',
+    emailSelector: '',
+    passwordSelector: '',
+    totpSelector: '',
+    readViaClipboard: false,
+  },
   stepDelayMs: 1500,
-  maxSkipAttempts: 8,
+  maxSkipAttempts: 10,
   accounts: [
     {
       id: 'acc-1',
+      url: 'https://akun.impura.id/contoh-link',
       email: '',
       password: '',
       totpSecret: 'JBSWY3DPEHPK3PXP',
@@ -98,7 +108,7 @@ export default function App() {
             <div>
               <div className="text-xs text-slate-500">Total Langkah</div>
               <div className="font-mono text-xl font-semibold text-slate-900 tabular-nums mt-0.5">
-                12 Tahap
+                13 Tahap
               </div>
             </div>
             <div>
