@@ -1,0 +1,6 @@
+{
+  "name": "Termux Playwright Payment Closer",
+  "description": "Generator skrip Playwright untuk Termux yang mengotomatiskan penghapusan profil pembayaran Google lengkap dengan konverter Base32 TOTP 6-digit dan panduan setup.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
